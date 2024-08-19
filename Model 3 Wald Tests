@@ -1,0 +1,107 @@
+lissyuse, cc(at10 at13 at16 be10 be13 be16 ca10 ca13 ca16 ch10 ch13 ch16 cz10 cz13 cz16 de10 de13 de16 dk10 dk13 dk16 ee10 ee13 ee16 es10 es13 es16 fi10 fi13 fi16 fr10 fr13 fr16 gr10 gr13 gr16 ie10 ie13 ie16 il10 il13 il16 is10 jp10 jp13 lu10 lu13 lu16 nl10 nl13 nl16 ro10 ro13 ro16 sk10 sk13 sk16 se10 se13 se16 uk10 uk13 uk16 us10 us13 us16) pvars(dname cname iso2 year pwgt ppopwgt age sex marital nchildren edyrs educlev emp hourstot ptime1 occb1 occ1_c indb1 indc1 indd1 gross1 pi11 pid)
+keep if inrange(age,25,45)
+keep if sex==2
+keep if emp==1
+drop if nchildren==.
+drop if gross1==.
+drop if occb1==10
+drop if occb1==90
+drop if indc1==90
+drop if hourstot==.
+drop if hourstot==0
+generate mother = 0
+replace mother = 1 if nchildren>0
+tab mother
+generate married = 0
+replace married = 1 if marital==110 | marital==100
+tab married
+merge m:m iso2 using "$mydata/ladams/THESIS Country-Level Indicators.dta"
+keep if _merge==3
+drop _merge
+sum coordination
+merge m:1 cname year using $myincl/ppp_2017.dta
+keep if _merge==3
+drop _merge
+gen hourwage = gross1 / lisppp
+drop if hourwage<=0
+gen hourwage_ln = ln(hourwage)
+drop if hourwage_ln<0
+sum hourwage_ln
+gen edlev = 0
+replace edlev = 0 if educlev==110 | (educlev==111)&(iso2=="es" | iso2=="il" | iso2=="lu" | iso2=="uk")
+replace edlev = 1 if educlev==120 | (educlev==100)&(iso2=="de" | iso2=="fi" | iso2=="uk")
+replace edlev = 2 if educlev==130
+replace edlev = 3 if educlev==210
+replace edlev = 4 if educlev==220
+replace edlev = 5 if educlev==311
+replace edlev = 6 if educlev==312 | (educlev==300)&(iso2=="ch" | iso2=="es" | iso2=="is" | iso2=="nl" | iso2=="uk")
+replace edlev = 7 if educlev==313
+replace edlev = 8 if educlev==320
+gen occupation = occb1
+replace occupation = occ1_c if iso2 == "fr" | iso2 == "jp" | iso2 == "ca"
+replace occupation = 1 if (iso2 == "fr" | iso2 == "jp")&(occ1_c==23 | occ1_c==37 | occ1_c==38 | occ1_c==5) | (iso2 == "ca")&(occ1_c==1 | occ1_c==2)
+replace occupation = 2 if (iso2 == "fr" | iso2 == "jp")&(occ1_c==31 | occ1_c==33 | occ1_c==34 | occ1_c==42 | occ1_c==10) | (iso2 == "ca")&(occ1_c==3 | occ1_c==6 | occ1_c==7 | occ1_c==9 | occ1_c==10 | occ1_c==11)
+replace occupation = 3 if (iso2 == "fr" | iso2 == "jp")&(occ1_c==43 | occ1_c==45 | occ1_c==46 | occ1_c==47 | occ1_c==48 | occ1_c==52 | occ1_c==9)  | (iso2 == "ca")&(occ1_c==8)
+replace occupation = 4 if (iso2 == "fr" | iso2 == "jp")&(occ1_c==54 | occ1_c==6) | (iso2 == "ca")&(occ1_c==4 | occ1_c==5)
+replace occupation = 5 if (iso2 == "fr" | iso2 == "jp")&(occ1_c==22 | occ1_c==35 | occ1_c==55 | occ1_c==56 | occ1_c==4 | occ1_c==3) | (iso2 == "ca")&(occ1_c==12 | occ1_c==13 | occ1_c==14 | occ1_c==15 | occ1_c==16 | occ1_c==17)
+replace occupation = 6 if (iso2 == "fr" | iso2 == "jp")&(occ1_c==13 | occ1_c==1)  | (iso2 == "ca")&(occ1_c==23)
+replace occupation = 7 if (iso2 == "fr" | iso2 == "jp")&(occ1_c==21 | occ1_c==63 | occ1_c==68 | occ1_c==2 | occ1_c==8) | (iso2 == "ca")&(occ1_c==18 | occ1_c==19 | occ1_c==20)
+replace occupation = 8 if (iso2 == "fr" | iso2 == "jp")&(occ1_c==62 | occ1_c==64 | occ1_c==65 | occ1_c==7) | (iso2 == "ca")&(occ1_c==21 | occ1_c==24)
+replace occupation = 9 if (iso2 == "fr" | iso2 == "jp")&(occ1_c==11 | occ1_c==12 | occ1_c==67 | occ1_c==69) | (iso2 == "ca")&(occ1_c==22 | occ1_c==25)
+drop if (iso2 == "fr" | iso2 == "jp")&(occ1_c==44 | occ1_c==53)
+gen industry = indc1
+replace industry = 1 if (indb1==1)&(indc1==. | indd1==.) | (indb1==1)&(iso2=="ca" | iso2=="ch" | iso2=="is" | iso2=="nl") | (indd1==1 | indc1==1 | indc1==2)
+replace industry = 2 if (indb1==2)&(indc1==. | indd1==.) | (indb1==2)&(iso2=="ca" | iso2=="ch" | iso2=="is" | iso2=="nl") | (indd1==2 | indd1==3 | indc1==3 | indc1==4)
+replace industry = 3 if (indb1==3)&(indc1==. | indd1==.) | (indb1==3)&(iso2=="ca" | iso2=="ch" | iso2=="is" | iso2=="nl") | (indd1==4 | indd1==5 | indd1==6 | indc1==5 | indc1==6)
+replace industry = 4 if (indb1==4)&(indc1==. | indd1==.) | (indb1==4)&(iso2=="ca" | iso2=="ch" | iso2=="is" | iso2=="nl") | (indd1==7 | indc1==7)
+replace industry = 5 if indd1==9 | indc1==8
+replace industry = 6 if (indb1==5)&(indc1==. | indd1==.) | (indb1==5)&(iso2=="ca" | iso2=="ch" | iso2=="is" | iso2=="nl") | (indd1==8 | indd1==10 | indc1==9)
+replace industry = 7 if (indb1==6)&(indc1==. | indd1==.) | (indb1==6)&(iso2=="ca" | iso2=="ch" | iso2=="is" | iso2=="nl") | (indd1==11 | indc1==10)
+replace industry = 8 if (indb1==7)&(indc1==. | indd1==.) | (indb1==7)&(iso2=="ca" | iso2=="ch" | iso2=="is" | iso2=="nl") | (indd1==12 | indd1==13 | indd1==14 | indc1==11)
+replace industry = 9 if (indb1==8)&(indc1==. | indd1==.) | (indb1==8)&(iso2=="ca" | iso2=="ch" | iso2=="is" | iso2=="nl") | (indd1==15 | indc1==12)
+replace industry = 10 if indd1==16 | indc1==13
+replace industry = 11 if indd1==17 | indc1==14
+replace industry = 12 if (indb1==9)&(indc1==. & indd1==.) | (indb1==9)&(iso2=="ca" | iso2=="ch" | iso2=="is" | iso2=="nl") | (indd1==18 | indd1==19 | indd1==20 | indd1==21 | indc1==15 | indc1==16 | indc1==17)
+gen ind_specific = 0
+replace ind_specific = 4.49 if industry==1
+replace ind_specific = 1.21 if industry==2
+replace ind_specific = 1.93 if industry==3
+replace ind_specific = 2.70 if industry==4
+replace ind_specific = 2.33 if industry==5
+replace ind_specific = 3.95 if industry==6
+replace ind_specific = 4.48 if industry==7
+replace ind_specific = 2.18 if industry==8
+replace ind_specific = 1.44 if industry==9
+replace ind_specific = 0.76 if industry==10
+replace ind_specific = 3.98 if industry==11
+replace ind_specific = 2.56 if industry==12
+gen occ_specific = 0
+replace occ_specific = 3.79 if occupation==1
+replace occ_specific = 1.89 if occupation==2
+replace occ_specific = 3.23 if occupation==3
+replace occ_specific = 2.99 if occupation==4
+replace occ_specific = 1.99 if occupation==5
+replace occ_specific = 2.80 if occupation==6
+replace occ_specific = 0.97 if occupation==7
+replace occ_specific = 3.34 if occupation==8
+replace occ_specific = 0.94 if occupation==9
+gen skill_specific = (abs(ind_specific + occ_specific))/2
+drop if (occ_specific==0)&(ind_specific==0)
+replace skill_specific = (abs(ind_specific)) if occ_specific==0
+replace skill_specific = (abs(occ_specific)) if ind_specific==0
+sum skill_specific
+encode iso2, gen(iso2_num)
+svyset [pweight=ppopwgt], psu(dname)
+svy: regress hourwage_ln i.mother##c.skill_specific i.mother##ib9.occupation hourstot i.married i.mother##c.edlev i.age i.iso2_num year
+test 1.mother
+test skill_specific
+test 1.mother#c.skill_specific
+test 1.occupation 2.occupation 3.occupation 4.occupation 5.occupation 6.occupation 7.occupation 8.occupation
+test 1.mother#1.occupation 1.mother#2.occupation 1.mother#3.occupation 1.mother#4.occupation 1.mother#5.occupation 1.mother#6.occupation 1.mother#7.occupation 1.mother#8.occupation
+test hourstot
+test 1.married
+test edlev
+test 1.mother#c.edlev
+test 26.age 27.age 28.age 29.age 30.age 31.age 32.age 33.age 34.age 35.age 36.age 37.age 38.age 39.age 40.age 41.age 42.age 43.age 44.age 45.age
+test 1.iso2_num 2.iso2_num 3.iso2_num 4.iso2_num 5.iso2_num 6.iso2_num 7.iso2_num 8.iso2_num 9.iso2_num 10.iso2_num 11.iso2_num 12.iso2_num 13.iso2_num 14.iso2_num 15.iso2_num 16.iso2_num 17.iso2_num 18.iso2_num 19.iso2_num 20.iso2_num 21.iso2_num 22.iso2_num 23.iso2_num
+test year
